@@ -16,7 +16,7 @@ namespace CelestialTeam {
 		float distanceToClosestWaypoint;
 		float distanceToOtherSpaceship;
 
-		Vector2 goToTarget;
+		public Vector2 goToTarget = Vector2.zero;
 
 
 		public override void Initialize(SpaceShipView spaceship, GameData data)
@@ -32,7 +32,8 @@ namespace CelestialTeam {
 			UpdateBlackboard(spaceship, otherSpaceship, data);
 
 			float thrust = 1.0f;
-			float targetOrient = spaceship.Orientation + 90.0f;
+			LookAt(spaceship, goToTarget, thrust, out float orientation, out float thrustSpeed);
+
 			bool needShoot = AimingHelpers.CanHit(spaceship, otherSpaceship.Position, otherSpaceship.Velocity, 0.15f);
 
 			bool shoot = (bool)celestialBehavior.GetVariable("OutShoot").GetValue();
@@ -41,7 +42,7 @@ namespace CelestialTeam {
 
 
 
-			InputData input = new InputData(thrust, targetOrient, shoot, dropMine, useShockwave);
+			InputData input = new InputData(thrustSpeed, orientation, shoot, dropMine, useShockwave);
 
 			ResetBlackboard();
 
@@ -51,17 +52,19 @@ namespace CelestialTeam {
 		void UpdateBlackboard(SpaceShipView spaceship, SpaceShipView otherSpaceship, GameData data)
         {
 			GetClosestMine(data.Mines);
-			GetClosestWaypoint(data.WayPoints, spaceship);
+			GetClosestWaypoint(data.WayPoints, spaceship, data);
+			goToTarget = closestWaypoint.Position;
+
 			distanceToOtherSpaceship = Vector2.Distance(transform.position, otherSpaceship.Position);
 
-			if ((bool)celestialBehavior.GetVariable("OutShootEnemy").GetValue())
-			{
-				AimingHelpers.CanHit(spaceship, otherSpaceship.Position, otherSpaceship.Velocity, 0.15f);
-			}
-			else if ((bool)celestialBehavior.GetVariable("OutShootMine").GetValue())
-            {
-				AimingHelpers.CanHit(spaceship, closestMine.Position, 0.15f);
-			}
+				/*if ((bool)celestialBehavior.GetVariable("OutShootEnemy").GetValue())
+				{
+					AimingHelpers.CanHit(spaceship, otherSpaceship.Position, otherSpaceship.Velocity, 0.15f);
+				}
+				else if ((bool)celestialBehavior.GetVariable("OutShootTarget").GetValue())
+				{
+					AimingHelpers.CanHit(spaceship, closestMine.Position, 0.15f);
+				}*/
 
 			celestialBehavior.SetVariableValue("TimeLeft", data.timeLeft);
 			celestialBehavior.SetVariableValue("Energy", spaceship.Energy);
@@ -75,6 +78,14 @@ namespace CelestialTeam {
 			celestialBehavior.SetVariableValue("OutShootEnemy", false);
 			celestialBehavior.SetVariableValue("OutMine", false);
 			celestialBehavior.SetVariableValue("OutShockwave", false);
+		}
+
+
+		public void LookAt(SpaceShipView spaceship, Vector2 targetPosition, float thrustSpeed, out float return1, out float return2)
+		{
+			return1 = AimingHelpers.ComputeSteeringOrient(spaceship, targetPosition, 1.2f);
+
+			return2 = thrustSpeed;
 		}
 
 		void GetClosestMine(List<MineView> mineList)
@@ -94,7 +105,7 @@ namespace CelestialTeam {
 			}
 		}
 
-		void GetClosestWaypoint(List<WayPointView> waypointList, SpaceShipView spaceship)
+		void GetClosestWaypoint(List<WayPointView> waypointList, SpaceShipView spaceship, GameData data)
 		{
 			for (int i = 0; i < waypointList.Count; i++)
 			{
