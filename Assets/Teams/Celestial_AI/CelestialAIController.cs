@@ -76,7 +76,7 @@ namespace CelestialTeam {
 			bool hasEnemyShot = /*EnemyShootsAtUs(data.Bullets, otherSpaceship, spaceship);*/HasEnemyShot(data.Bullets, spaceship);
 			bool enemyIsShootingAtUs = AimingHelpers.CanHit(otherSpaceship, spaceship.Position, spaceship.Velocity, 0.15f) && hasEnemyShot;
 			bool canHitEnemy = AimingHelpers.CanHit(spaceship, otherSpaceship.Position, otherSpaceship.Velocity, 0.15f);
-			bool canHitMine = AimingHelpers.CanHit(spaceship, closestMine.Position, 0.15f);
+			bool canHitMine = false;
 
 			celestialBehavior.SetVariableValue("TimeLeft", data.timeLeft);
 			celestialBehavior.SetVariableValue("Energy", spaceship.Energy);
@@ -88,11 +88,13 @@ namespace CelestialTeam {
             celestialBehavior.SetVariableValue("EnemyPosition", otherSpaceship.Position);
 			celestialBehavior.SetVariableValue("DistanceToEnemy", distanceToOtherSpaceship);
             celestialBehavior.SetVariableValue("CanHitEnemy", canHitEnemy);
-            celestialBehavior.SetVariableValue("CanHitMine", canHitMine);
+            
             celestialBehavior.SetVariableValue("IsEnemyShootingAtUs", enemyIsShootingAtUs);
 
 			if (closestMine != null)
             {
+				canHitMine = AimingHelpers.CanHit(spaceship, closestMine.Position, 0.15f);
+				celestialBehavior.SetVariableValue("CanHitMine", canHitMine);
 				celestialBehavior.SetVariableValue("ClosestMine", closestMine.Position);
 				celestialBehavior.SetVariableValue("DistanceToClosestMine", distanceToClosestMine);
 			}
