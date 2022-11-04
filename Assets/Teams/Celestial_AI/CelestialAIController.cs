@@ -67,31 +67,33 @@ namespace CelestialTeam {
 
 		void UpdateBlackboard(SpaceShipView spaceship, SpaceShipView otherSpaceship, GameData data)
         {
+			bool capturedClosestPoint = CheckForCapture(spaceship);
+
 			GetClosestMine(data.Mines);
 			GetClosestWaypoint(data.WayPoints, spaceship, data);
 
 			distanceToOtherSpaceship = Vector2.Distance(transform.position, otherSpaceship.Position);
 
-
-			bool canHitEnemy = false;
-			bool canHitTarget = false;
-				if ((bool)celestialBehavior.GetVariable("OutShootEnemy").GetValue())
-				{
-					canHitEnemy = AimingHelpers.CanHit(spaceship, otherSpaceship.Position, otherSpaceship.Velocity, 0.15f);
-				}
-				else if ((bool)celestialBehavior.GetVariable("OutShootTarget").GetValue())
-				{
-					canHitTarget = AimingHelpers.CanHit(spaceship, shootTarget, 0.15f);
-				}
-
 			bool hasEnemyShot = /*EnemyShootsAtUs(data.Bullets, otherSpaceship, spaceship);*/HasEnemyShot(data.Bullets, spaceship);
 			bool enemyIsShootingAtUs = AimingHelpers.CanHit(otherSpaceship, spaceship.Position, spaceship.Velocity, 0.15f) && hasEnemyShot;
+			bool canHitEnemy = false;
+			bool canHitTarget = false;
 
-            celestialBehavior.SetVariableValue("TimeLeft", data.timeLeft);
+			if ((bool)celestialBehavior.GetVariable("OutShootEnemy").GetValue())
+			{
+				canHitEnemy = AimingHelpers.CanHit(spaceship, otherSpaceship.Position, otherSpaceship.Velocity, 0.15f);
+			}
+			else if ((bool)celestialBehavior.GetVariable("OutShootTarget").GetValue())
+			{
+				canHitTarget = AimingHelpers.CanHit(spaceship, shootTarget, 0.15f);
+			}
+
+			celestialBehavior.SetVariableValue("TimeLeft", data.timeLeft);
 			celestialBehavior.SetVariableValue("Energy", spaceship.Energy);
 			celestialBehavior.SetVariableValue("EnemyEnergy", otherSpaceship.Energy);
 			celestialBehavior.SetVariableValue("ClosestWaypoint", closestWaypoint.Position);
 			celestialBehavior.SetVariableValue("DistanceToClosestWaypoint", distanceToClosestWaypoint);
+			celestialBehavior.SetVariableValue("JustCapturedAPoint", capturedClosestPoint);
             celestialBehavior.SetVariableValue("EnemyPosition", otherSpaceship.Position);
 			celestialBehavior.SetVariableValue("DistanceToEnemy", distanceToOtherSpaceship);
             celestialBehavior.SetVariableValue("CanHitEnemy", canHitEnemy);
@@ -160,6 +162,15 @@ namespace CelestialTeam {
 					}
 				}
 			}
+		}
+
+		bool CheckForCapture(SpaceShipView spaceship)
+        {
+			if (closestWaypoint != null)
+				if (closestWaypoint.Owner == spaceship.Owner)
+					return true;
+
+			return false;
 		}
 
 		bool EnemyShootsAtUs(List<BulletView> bulletList, SpaceShipView spaceship, SpaceShipView otherSpaceship)
