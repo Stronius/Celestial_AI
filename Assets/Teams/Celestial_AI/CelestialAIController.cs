@@ -27,6 +27,8 @@ namespace CelestialTeam {
 		{
 			animator = GetComponent<Animator>();
 			celestialBehavior = GetComponent<BehaviorTree>();
+			celestialBehavior.SetVariableValue("Thrust", 1f);
+
 
 			/*BaseSpaceShipController[] ships = FindObjectsOfType<BaseSpaceShipController>();
 
@@ -67,15 +69,15 @@ namespace CelestialTeam {
         {
 			bool capturedClosestPoint = CheckForCapture(spaceship);
 
-			GetClosestMine(data.Mines);
+			GetClosestMine(data.Mines, spaceship);
 			GetClosestWaypoint(data.WayPoints, spaceship, data);
 			AngleToClosestWaypoint(spaceship);
 
 			distanceToOtherSpaceship = Vector2.Distance(transform.position, otherSpaceship.Position);
 
 			bool hasEnemyShot = /*EnemyShootsAtUs(data.Bullets, otherSpaceship, spaceship);*/HasEnemyShot(data.Bullets, spaceship);
-			bool enemyIsShootingAtUs = AimingHelpers.CanHit(otherSpaceship, spaceship.Position, spaceship.Velocity, 0.15f) && hasEnemyShot;
-			bool canHitEnemy = AimingHelpers.CanHit(spaceship, otherSpaceship.Position, otherSpaceship.Velocity, 0.15f);
+			bool enemyIsShootingAtUs = AimingHelpers.CanHit(otherSpaceship, spaceship.Position, spaceship.Velocity, 2f) && hasEnemyShot;
+			bool canHitEnemy = AimingHelpers.CanHit(spaceship, otherSpaceship.Position, otherSpaceship.Velocity, 2f);
 			bool canHitMine = false;
 
 			celestialBehavior.SetVariableValue("TimeLeft", data.timeLeft);
@@ -93,7 +95,10 @@ namespace CelestialTeam {
 
 			if (closestMine != null)
             {
-				canHitMine = AimingHelpers.CanHit(spaceship, closestMine.Position, 0.15f);
+				canHitMine = AimingHelpers.CanHit(spaceship, closestMine.Position, 5f);
+
+				Debug.Log("Position : " + closestMine.Position);
+
 				celestialBehavior.SetVariableValue("CanHitMine", canHitMine);
 				celestialBehavior.SetVariableValue("ClosestMine", closestMine.Position);
 				celestialBehavior.SetVariableValue("DistanceToClosestMine", distanceToClosestMine);
@@ -116,7 +121,7 @@ namespace CelestialTeam {
 			return2 = thrustSpeed;
 		}
 
-		void GetClosestMine(List<MineView> mineList)
+		void GetClosestMine(List<MineView> mineList, SpaceShipView spaceship)
         {
 			closestMine = null;
 
@@ -125,12 +130,12 @@ namespace CelestialTeam {
 				if (closestMine == null)
                 {
 					closestMine = mineList[i];
-					distanceToClosestMine = Vector2.Distance(transform.position, closestMine.Position);
+					distanceToClosestMine = Vector2.Distance(spaceship.Position, closestMine.Position);
 				}
-				else if (distanceToClosestMine > Vector2.Distance(transform.position, mineList[i].Position))
+				else if (distanceToClosestMine > Vector2.Distance(spaceship.Position, mineList[i].Position))
 				{
 					closestMine = mineList[i];
-					distanceToClosestMine = Vector2.Distance(transform.position, closestMine.Position);
+					distanceToClosestMine = Vector2.Distance(spaceship.Position, closestMine.Position);
 				}
 			}
 		}
@@ -171,7 +176,7 @@ namespace CelestialTeam {
 			Vector2 waypointDirection = (closestWaypoint.Position - spaceship.Position).normalized;
 			Vector2 currentPlayerDirection = spaceship.LookAt.normalized;
 
-			Debug.Log(Mathf.Abs(Vector2.Angle(currentPlayerDirection, waypointDirection)));
+			//Debug.Log(Mathf.Abs(Vector2.Angle(currentPlayerDirection, waypointDirection)));
 
 
 			return Mathf.Abs(Vector2.Angle(currentPlayerDirection, waypointDirection));
