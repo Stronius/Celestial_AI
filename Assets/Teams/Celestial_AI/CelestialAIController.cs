@@ -16,8 +16,6 @@ namespace CelestialTeam {
 		float distanceToClosestWaypoint;
 		float distanceToOtherSpaceship;
 
-		public Vector2 goToTarget = Vector2.zero;
-		Vector2 shootTarget = Vector2.zero;
 		List<BulletView> enemyBullets;
         List<BulletView> myBullets;
 		int bulletCount;
@@ -53,7 +51,7 @@ namespace CelestialTeam {
 			float thrust = (float)celestialBehavior.GetVariable("Thrust").GetValue();
 			LookAt(spaceship, (Vector2)celestialBehavior.GetVariable("Target").GetValue(), thrust, out float orientation, out float thrustSpeed);
 
-			bool shoot = (bool)celestialBehavior.GetVariable("OutShootTarget").GetValue() || (bool)celestialBehavior.GetVariable("OutShootEnemy").GetValue();
+			bool shoot = (bool)celestialBehavior.GetVariable("OutShootMine").GetValue() || (bool)celestialBehavior.GetVariable("OutShootEnemy").GetValue();
 			bool dropMine = (bool)celestialBehavior.GetVariable("OutMine").GetValue();
 			bool useShockwave = (bool)celestialBehavior.GetVariable("OutShockwave").GetValue();
 
@@ -71,33 +69,26 @@ namespace CelestialTeam {
 
 			GetClosestMine(data.Mines);
 			GetClosestWaypoint(data.WayPoints, spaceship, data);
+			AngleToClosestWaypoint(spaceship);
 
 			distanceToOtherSpaceship = Vector2.Distance(transform.position, otherSpaceship.Position);
 
 			bool hasEnemyShot = /*EnemyShootsAtUs(data.Bullets, otherSpaceship, spaceship);*/HasEnemyShot(data.Bullets, spaceship);
 			bool enemyIsShootingAtUs = AimingHelpers.CanHit(otherSpaceship, spaceship.Position, spaceship.Velocity, 0.15f) && hasEnemyShot;
-			bool canHitEnemy = false;
-			bool canHitTarget = false;
-
-			if ((bool)celestialBehavior.GetVariable("OutShootEnemy").GetValue())
-			{
-				canHitEnemy = AimingHelpers.CanHit(spaceship, otherSpaceship.Position, otherSpaceship.Velocity, 0.15f);
-			}
-			else if ((bool)celestialBehavior.GetVariable("OutShootTarget").GetValue())
-			{
-				canHitTarget = AimingHelpers.CanHit(spaceship, shootTarget, 0.15f);
-			}
+			bool canHitEnemy = AimingHelpers.CanHit(spaceship, otherSpaceship.Position, otherSpaceship.Velocity, 0.15f);
+			bool canHitMine = AimingHelpers.CanHit(spaceship, closestMine.Position, 0.15f);
 
 			celestialBehavior.SetVariableValue("TimeLeft", data.timeLeft);
 			celestialBehavior.SetVariableValue("Energy", spaceship.Energy);
 			celestialBehavior.SetVariableValue("EnemyEnergy", otherSpaceship.Energy);
 			celestialBehavior.SetVariableValue("ClosestWaypoint", closestWaypoint.Position);
 			celestialBehavior.SetVariableValue("DistanceToClosestWaypoint", distanceToClosestWaypoint);
+			celestialBehavior.SetVariableValue("AngleToClosestWaypoint", AngleToClosestWaypoint(spaceship));
 			celestialBehavior.SetVariableValue("JustCapturedAPoint", capturedClosestPoint);
             celestialBehavior.SetVariableValue("EnemyPosition", otherSpaceship.Position);
 			celestialBehavior.SetVariableValue("DistanceToEnemy", distanceToOtherSpaceship);
             celestialBehavior.SetVariableValue("CanHitEnemy", canHitEnemy);
-            celestialBehavior.SetVariableValue("CanHitTarget", canHitTarget);
+            celestialBehavior.SetVariableValue("CanHitMine", canHitMine);
             celestialBehavior.SetVariableValue("IsEnemyShootingAtUs", enemyIsShootingAtUs);
 
 			if (closestMine != null)
@@ -109,7 +100,7 @@ namespace CelestialTeam {
 
 		void ResetBlackboard()
         {
-            celestialBehavior.SetVariableValue("OutShootTarget", false);
+            celestialBehavior.SetVariableValue("OutShootMine", false);
 			celestialBehavior.SetVariableValue("OutShootEnemy", false);
 			celestialBehavior.SetVariableValue("OutMine", false);
 			celestialBehavior.SetVariableValue("OutShockwave", false);
@@ -171,6 +162,17 @@ namespace CelestialTeam {
 					return true;
 
 			return false;
+		}
+
+		float AngleToClosestWaypoint(SpaceShipView spaceship)
+        {
+			Vector2 waypointDirection = (closestWaypoint.Position - spaceship.Position).normalized;
+			Vector2 currentPlayerDirection = spaceship.LookAt.normalized;
+
+			Debug.Log(Mathf.Abs(Vector2.Angle(currentPlayerDirection, waypointDirection)));
+
+
+			return Mathf.Abs(Vector2.Angle(currentPlayerDirection, waypointDirection));
 		}
 
 		bool EnemyShootsAtUs(List<BulletView> bulletList, SpaceShipView spaceship, SpaceShipView otherSpaceship)
